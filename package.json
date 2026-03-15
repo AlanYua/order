@@ -2,7 +2,7 @@
   "name": "order",
   "version": "0.1.0",
   "private": true,
-  "engines": { "node": "18.x" },
+  "engines": { "node": "24.x" },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
   },
