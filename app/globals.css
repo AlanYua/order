@@ -95,13 +95,15 @@
     position: relative !important;
     left: 0;
     top: 0;
-    width: 100%;
+    width: 80mm;
+    max-width: 80mm;
     padding: 0;
     font-size: 14px;
     background: #fff;
   }
   .statistics-report table {
     width: 100%;
+    max-width: 80mm;
   }
   .statistics-report th,
   .statistics-report td {
