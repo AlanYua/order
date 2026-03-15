@@ -1,4 +1,3 @@
 {
-  "framework": "nextjs",
-  "outputDirectory": "."
+  "framework": "nextjs"
 }
