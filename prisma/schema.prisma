@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Supplier {
+  id        String   @id @default(cuid())
+  name      String
+  contact   String?
+  createdAt DateTime @default(now())
+  items     Item[]
+}
+
+model Season {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  items     Item[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  items     Item[]
+}
+
+model Unit {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  items     Item[]
+  orderItems OrderItem[]
+}
+
+model Item {
+  id         String   @id @default(cuid())
+  name       String
+  unitId     String
+  categoryId String
+  seasonId   String
+  supplierId String
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  unit       Unit     @relation(fields: [unitId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id])
+  season     Season   @relation(fields: [seasonId], references: [id])
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+  orderItems OrderItem[]
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String?     @unique
+  orderDate     DateTime
+  customerName  String
+  phone         String
+  address       String
+  createdAt     DateTime    @default(now())
+  orderItems    OrderItem[]
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  itemId    String
+  quantity  Float
+  unitId    String
+  unitName  String?
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  item      Item     @relation(fields: [itemId], references: [id])
+  unit      Unit     @relation(fields: [unitId], references: [id])
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}

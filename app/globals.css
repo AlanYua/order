@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 熱感應紙列印：僅顯示 .thermal-receipt 區塊 */
+@media print {
+  .no-print,
+  .no-print-block,
+  .print-area {
+    display: none !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .thermal-receipt,
+  .thermal-receipt * {
+    visibility: visible;
+  }
+  .thermal-receipt {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    max-width: 80mm;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+    line-height: 1.3;
+    color: #000;
+    background: #fff;
+  }
+  .thermal-receipt .receipt-paper {
+    width: 80mm;
+    padding: 8px 6px;
+    font-family: system-ui, "Microsoft JhengHei", "PingFang TC", sans-serif;
+  }
+  .thermal-receipt .receipt-header {
+    margin-bottom: 8px;
+  }
+  .thermal-receipt .receipt-row {
+    display: flex;
+    margin-bottom: 2px;
+  }
+  .thermal-receipt .receipt-label {
+    flex: 0 0 48px;
+  }
+  .thermal-receipt .receipt-value {
+    flex: 1;
+    word-break: break-all;
+  }
+  .thermal-receipt .receipt-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  .thermal-receipt .receipt-th,
+  .thermal-receipt .receipt-td {
+    border: 1px solid #000;
+    padding: 2px 4px;
+    text-align: left;
+  }
+  .thermal-receipt .receipt-th-small,
+  .thermal-receipt .receipt-td-small {
+    width: 28px;
+  }
+  .thermal-receipt .receipt-th-num,
+  .thermal-receipt .receipt-td-num {
+    width: 40px;
+    text-align: right;
+  }
+  .thermal-receipt .receipt-th {
+    font-weight: 600;
+  }
+
+  /* 統計報表列印：只顯示 #statistics-report */
+  body * {
+    visibility: hidden;
+  }
+  #statistics-report,
+  #statistics-report * {
+    visibility: visible;
+  }
+  #statistics-report {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+    font-size: 12px;
+    background: #fff;
+  }
+  .statistics-report table {
+    width: 100%;
+  }
+  .statistics-report th,
+  .statistics-report td {
+    border: 1px solid #333 !important;
+    padding: 6px 8px;
+  }
+  .statistics-report tbody tr:nth-child(even) {
+    background: #f0f9ff !important;
+  }
+}
