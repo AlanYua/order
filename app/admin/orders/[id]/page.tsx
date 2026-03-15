@@ -434,17 +434,18 @@ export default function AdminOrderDetailPage({
         }
       >
         <div className="receipt-paper">
+          <h2 className="receipt-title">阿森蔬果訂購 · 訂單明細</h2>
           <div className="receipt-header">
             <div className="receipt-row">
-              <span className="receipt-label">編號</span>
+              <span className="receipt-label">訂單編號</span>
               <span className="receipt-value">{order.orderNumber ?? order.id}</span>
             </div>
             <div className="receipt-row">
-              <span className="receipt-label">日期</span>
+              <span className="receipt-label">訂購日期</span>
               <span className="receipt-value">{orderDateStr}</span>
             </div>
             <div className="receipt-row">
-              <span className="receipt-label">客戶</span>
+              <span className="receipt-label">姓名</span>
               <span className="receipt-value">{order.customerName}</span>
             </div>
             <div className="receipt-row">
@@ -456,26 +457,25 @@ export default function AdminOrderDetailPage({
               <span className="receipt-value">{order.address}</span>
             </div>
             <div className="receipt-row">
-              <span className="receipt-label">樣數</span>
+              <span className="receipt-label">品項數</span>
               <span className="receipt-value">{order.orderItems.length}</span>
             </div>
           </div>
           <table className="receipt-table">
             <thead>
               <tr>
-                <th className="receipt-th receipt-th-small">小計</th>
-                <th className="receipt-th">商品名稱</th>
-                <th className="receipt-th receipt-th-num">數量</th>
-                <th className="receipt-th">單位</th>
+                <th className="receipt-th receipt-th-item">品項</th>
+                <th className="receipt-th receipt-th-qty">數量單位</th>
               </tr>
             </thead>
             <tbody>
               {order.orderItems.map((oi) => (
                 <tr key={oi.id}>
-                  <td className="receipt-td receipt-td-small" />
-                  <td className="receipt-td">{oi.item.name}</td>
-                  <td className="receipt-td receipt-td-num">{oi.quantity}</td>
-                  <td className="receipt-td">{oi.unitName ?? oi.unit.name}</td>
+                  <td className="receipt-td receipt-td-item">{oi.item.name}</td>
+                  <td className="receipt-td receipt-td-qty">
+                    {oi.quantity}
+                    {oi.unitName ?? oi.unit.name}
+                  </td>
                 </tr>
               ))}
             </tbody>
