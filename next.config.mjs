@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ["@prisma/client"],
+  experimental: { serverComponentsExternalPackages: ["@prisma/client"] },
   eslint: { ignoreDuringBuilds: true },
 };
 
