@@ -238,7 +238,7 @@ export default function AdminStatisticsPage() {
                       <span className="text-stone-400" aria-hidden>▼</span>
                     </span>
                   </th>
-                  <th className="border border-stone-200 p-2 text-left text-sm font-semibold text-stone-800">
+                  <th className="border border-stone-200 p-2 text-left text-sm font-semibold text-stone-800 print-hide-col">
                     <span className="inline-flex items-center gap-1">
                       分類
                       <span className="text-stone-400" aria-hidden>▼</span>
@@ -246,7 +246,7 @@ export default function AdminStatisticsPage() {
                   </th>
                   <th className="border border-stone-200 p-2 text-left text-sm font-semibold text-stone-800">
                     <span className="inline-flex items-center gap-1">
-                      明細名
+                      明細
                       <span className="text-stone-400" aria-hidden>▼</span>
                     </span>
                   </th>
@@ -291,7 +291,7 @@ export default function AdminStatisticsPage() {
                     ) : null}
                     {row.isFirstRowOfCategory && (row.categoryRowSpan > 0 || row.kind === "category-only") ? (
                       <td
-                        className="border border-stone-200 p-2 align-top"
+                        className="border border-stone-200 p-2 align-top print-hide-col"
                         rowSpan={row.kind === "category-only" ? 1 : row.categoryRowSpan}
                       >
                         {row.categoryKey ? (

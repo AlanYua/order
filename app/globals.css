@@ -116,6 +116,9 @@
   .statistics-report tbody tr:nth-child(even) {
     background: #f0f9ff !important;
   }
+  .statistics-report .print-hide-col {
+    display: none !important;
+  }
 }
 
 /* 收據「以圖列印」用：與 @media print 內 .thermal-receipt 相同版型，供 html2canvas 擷取（避免實機亂碼） */
