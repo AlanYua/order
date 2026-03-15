@@ -30,7 +30,7 @@ type FlatRow =
       supplierId: string;
       supplierName: string;
       supplierRowSpan: number;
-      isFirstRowOfSupplier: false;
+      isFirstRowOfSupplier: boolean;
       categoryKey: string;
       categoryName: string;
       categoryRowSpan: number;
@@ -44,11 +44,11 @@ type FlatRow =
       supplierId: string;
       supplierName: string;
       supplierRowSpan: number;
-      isFirstRowOfSupplier: false;
+      isFirstRowOfSupplier: boolean;
       categoryKey: string;
       categoryName: string;
       categoryRowSpan: number;
-      isFirstRowOfCategory: false;
+      isFirstRowOfCategory: boolean;
       itemName: string;
       unitName: string;
       totalQty: number;

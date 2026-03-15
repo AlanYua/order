@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 const DEFAULT = "歡迎訂購，請於訂購日期前一日完成下單。\n若有特殊需求或疑問請來電告知。";
 
 export async function GET() {
