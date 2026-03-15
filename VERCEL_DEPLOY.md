@@ -84,8 +84,11 @@
 
 ## 常見問題
 
+- **No Output Directory named "public" found**  
+  Vercel 專案 **Settings** → **Build & Development Settings** → 找到 **Output Directory**，把裡面的 `public` **刪掉、留空**，儲存後到 Deployments 按 **Redeploy**。Next.js 不需要設 Output Directory。
+
 - **Deployments 一直顯示 Error**  
-  點進該筆失敗的部署 → 上方 **Building**（或 **Build Logs**）→ 捲到 log 最下方，把**紅色錯誤整段**複製下來才能對症修。專案已加 `.nvmrc`（Node 24）與略過 build 時 ESLint。
+  點進該筆失敗的部署 → 上方 **Building**（或 **Build Logs**）→ 捲到 log 最下方，把**紅色錯誤整段**複製下來才能對症修。
 
 - **Build 失敗：Prisma / DATABASE_URL**  
   確認 Vercel 的 Environment Variables 有設 `DATABASE_URL` 和 `SESSION_SECRET`，且 Neon 連線字串是 **Pooled**、結尾有 `?sslmode=require`。

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import html2canvas from "html2canvas";
 
 type Unit = { id: string; name: string };
 type Item = { id: string; name: string; unitId: string; unit: Unit };
@@ -46,6 +47,8 @@ export default function AdminOrderDetailPage({
   });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [capturingForPrint, setCapturingForPrint] = useState(false);
+  const receiptRef = useRef<HTMLDivElement>(null);
   const id = params.id;
 
   function fetchOrder() {
@@ -170,8 +173,35 @@ export default function AdminOrderDetailPage({
   }
 
   function handlePrint() {
-    window.print();
+    setCapturingForPrint(true);
   }
+
+  useEffect(() => {
+    if (!capturingForPrint || !receiptRef.current) return;
+    const el = receiptRef.current;
+    html2canvas(el, { scale: 2, useCORS: true, backgroundColor: "#fff", logging: false })
+      .then((canvas) => {
+        const dataUrl = canvas.toDataURL("image/png");
+        const w = window.open("", "_blank");
+        if (!w) {
+          setCapturingForPrint(false);
+          return;
+        }
+        w.document.write(`
+          <!DOCTYPE html><html><head><title>列印收據</title>
+          <style>@media print{html,body{margin:0;padding:0;height:auto!important;min-height:0!important;}img{display:block;vertical-align:top;}}</style></head>
+          <body style="margin:0;padding:0;">
+            <img src="${dataUrl}" style="width:80mm;max-width:80mm;height:auto;display:block;" />
+          </body></html>
+        `);
+        w.document.close();
+        w.focus();
+        w.onafterprint = () => w.close();
+        setTimeout(() => w.print(), 300);
+      })
+      .catch(() => setCapturingForPrint(false))
+      .finally(() => setCapturingForPrint(false));
+  }, [capturingForPrint]);
 
   if (!order) return <p>{id ? "載入中..." : "訂單不存在"}</p>;
 
@@ -393,8 +423,16 @@ export default function AdminOrderDetailPage({
         )}
       </div>
 
-      {/* 熱感應紙列印專用：僅在 @media print 顯示 */}
-      <div className="thermal-receipt">
+      {/* 熱感應紙：以圖列印用（先擷圖再送印，避免亂碼） */}
+      <div
+        ref={receiptRef}
+        className={capturingForPrint ? "thermal-receipt receipt-canvas-source" : "thermal-receipt"}
+        style={
+          capturingForPrint
+            ? { display: "block", position: "fixed", left: -9999, top: 0, zIndex: -1 }
+            : { display: "none" }
+        }
+      >
         <div className="receipt-paper">
           <div className="receipt-header">
             <div className="receipt-row">
@@ -416,6 +454,10 @@ export default function AdminOrderDetailPage({
             <div className="receipt-row">
               <span className="receipt-label">地址</span>
               <span className="receipt-value">{order.address}</span>
+            </div>
+            <div className="receipt-row">
+              <span className="receipt-label">樣數</span>
+              <span className="receipt-value">{order.orderItems.length}</span>
             </div>
           </div>
           <table className="receipt-table">
@@ -441,8 +483,11 @@ export default function AdminOrderDetailPage({
         </div>
       </div>
 
-      {/* 螢幕上隱藏熱感應區塊，列印時由 globals.css 控制顯示 */}
-      <style jsx>{`.thermal-receipt { display: none; }`}</style>
+      {capturingForPrint && (
+        <p className="no-print fixed bottom-4 left-1/2 -translate-x-1/2 rounded bg-stone-800 px-4 py-2 text-sm text-white">
+          正在產生列印預覽…
+        </p>
+      )}
     </div>
   );
 }
