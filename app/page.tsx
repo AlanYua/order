@@ -216,7 +216,7 @@ export default function HomePage() {
             style={{ fontFamily: "system-ui, sans-serif" }}
           >
             <h2 className="text-lg font-bold text-stone-800 border-b border-stone-200 pb-2 mb-3">
-              阿森蔬果訂購 · 訂單明細
+              阿森蔬菜訂購 · 訂單明細
             </h2>
             <p className="text-sm text-stone-600"><strong>訂單編號</strong> {snap.orderNumber}</p>
             <p className="text-sm text-stone-600"><strong>訂購日期</strong> {orderDateStr}</p>
@@ -271,7 +271,7 @@ export default function HomePage() {
       <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-stone-800 tracking-tight">
-            阿森蔬果訂購
+            阿森蔬菜訂購
           </h1>
           <p className="text-stone-500 mt-1">填寫資料後選擇品項即可送出</p>
         </div>

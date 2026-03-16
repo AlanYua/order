@@ -434,7 +434,7 @@ export default function AdminOrderDetailPage({
         }
       >
         <div className="receipt-paper">
-          <h2 className="receipt-title">阿森蔬果訂購 · 訂單明細</h2>
+          <h2 className="receipt-title">阿森蔬菜訂購 · 訂單明細</h2>
           <div className="receipt-header">
             <div className="receipt-row">
               <span className="receipt-label">訂單編號</span>
