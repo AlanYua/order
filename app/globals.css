@@ -79,7 +79,7 @@
     font-weight: 600;
   }
 
-  /* 統計報表列印：只顯示 #statistics-report，從頁面最上方開始、無上方空白 */
+  /* 統計報表列印：只顯示 #statistics-report，從頁面最上方開始且可跨頁，不被截斷 */
   html, body {
     height: auto !important;
     min-height: 0 !important;
@@ -94,7 +94,7 @@
     visibility: visible;
   }
   #statistics-report {
-    position: fixed !important;
+    position: absolute !important;
     left: 0 !important;
     top: 0 !important;
     width: 80mm;
