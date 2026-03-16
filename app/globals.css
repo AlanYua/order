@@ -108,8 +108,8 @@
     width: 100%;
     max-width: 80mm;
   }
-  /* 列印多頁時，表頭只在第一頁出現，不在每頁重複 */
   .statistics-report thead {
+    /* 不要在每一頁都重複表頭，只在第一頁出現一次 */
     display: table-row-group;
   }
   .statistics-report th,
