@@ -108,6 +108,10 @@
     width: 100%;
     max-width: 80mm;
   }
+  /* 列印多頁時，表頭只在第一頁出現，不在每頁重複 */
+  .statistics-report thead {
+    display: table-row-group;
+  }
   .statistics-report th,
   .statistics-report td {
     border: 1px solid #333 !important;
