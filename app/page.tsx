@@ -37,6 +37,7 @@ export default function HomePage() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [step, setStep] = useState<1 | 2>(1);
+  const [mobileTab, setMobileTab] = useState<"items" | "cart">("items");
   const [orderDate, setOrderDate] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
@@ -388,7 +389,145 @@ export default function HomePage() {
               ))}
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
+            {/* 手機：品項 / 已選 分頁切換，避免一直往下捲 */}
+            <div className="md:hidden space-y-4">
+              <div className="flex rounded-xl bg-stone-100 p-1 text-sm font-medium">
+                <button
+                  type="button"
+                  onClick={() => setMobileTab("items")}
+                  className={`flex-1 py-2 rounded-lg transition ${
+                    mobileTab === "items"
+                      ? "bg-white text-emerald-600 shadow-sm"
+                      : "text-stone-500"
+                  }`}
+                >
+                  選擇品項
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileTab("cart")}
+                  className={`flex-1 py-2 rounded-lg transition ${
+                    mobileTab === "cart"
+                      ? "bg-white text-emerald-600 shadow-sm"
+                      : "text-stone-500"
+                  }`}
+                >
+                  已選品項 ({cart.length})
+                </button>
+              </div>
+
+              {mobileTab === "items" && (
+                <div className="space-y-4">
+                  <div className="bg-white rounded-2xl shadow-sm border border-stone-200/80 p-5 overflow-hidden">
+                    <h2 className="font-semibold text-stone-800 mb-3">選擇品項</h2>
+                    <ul className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+                      {filtered.map((item) => (
+                        <ItemRow
+                          key={item.id}
+                          item={item}
+                          units={units}
+                          addToCart={addToCart}
+                        />
+                      ))}
+                      {filtered.length === 0 && (
+                        <li className="text-stone-400 py-4 text-center text-sm">此分類暫無品項</li>
+                      )}
+                    </ul>
+                  </div>
+                  <div className="bg-stone-50 rounded-xl border border-stone-200/80 p-4">
+                    <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">
+                      單位換算
+                    </h3>
+                    <p className="text-sm text-stone-600">{unitConversion || DEFAULT_UNIT_CONVERSION}</p>
+                  </div>
+                </div>
+              )}
+
+              {mobileTab === "cart" && (
+                <div className="bg-white rounded-2xl shadow-sm border border-stone-200/80 p-5 flex flex-col">
+                  <h2 className="font-semibold text-stone-800 mb-3">已選品項</h2>
+                  <div className="space-y-4 flex-1 min-h-0 max-h-[60vh] overflow-y-auto">
+                    {(() => {
+                      const byCategory = cart.reduce<{ cat: Category; lines: { line: CartLine; idx: number }[] }[]>(
+                        (acc, line, idx) => {
+                          const cat = line.item.category;
+                          const group = acc.find((g) => g.cat.id === cat.id);
+                          if (group) group.lines.push({ line, idx });
+                          else acc.push({ cat, lines: [{ line, idx }] });
+                          return acc;
+                        },
+                        []
+                      );
+                      if (byCategory.length === 0) {
+                        return <p className="text-stone-400 py-4 text-center text-sm">尚未選擇品項</p>;
+                      }
+                      return byCategory.map(({ cat, lines }) => (
+                        <div key={cat.id}>
+                          <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2 border-b border-stone-100 pb-1">
+                            {cat.name}
+                          </h3>
+                          <ul className="space-y-2">
+                            {lines.map(({ line, idx }) => (
+                              <li
+                                key={`${line.item.id}-${line.unitId}-${idx}`}
+                                className="flex items-center gap-2 text-sm flex-wrap"
+                              >
+                                <span className="flex-1 min-w-0 text-stone-800">{line.item.name}</span>
+                                <select
+                                  value={line.unitId}
+                                  onChange={(e) => updateCartUnit(idx, e.target.value)}
+                                  className="rounded-lg border border-stone-200 px-2 py-1 text-xs w-16"
+                                >
+                                  {units.map((u) => (
+                                    <option key={u.id} value={u.id}>{u.name}</option>
+                                  ))}
+                                </select>
+                                <span className="font-medium text-stone-700 w-10 text-right">{line.quantity}</span>
+                                <div className="flex items-center gap-0.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => updateCartQuantity(idx, -1)}
+                                    className="w-7 h-7 rounded-lg border border-stone-200 text-stone-500 hover:bg-stone-100 flex items-center justify-center"
+                                  >
+                                    −
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateCartQuantity(idx, 1)}
+                                    className="w-7 h-7 rounded-lg border border-stone-200 text-stone-500 hover:bg-stone-100 flex items-center justify-center"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => removeFromCart(idx)}
+                                  className="text-red-500 hover:text-red-600 text-xs"
+                                >
+                                  移除
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                  <form onSubmit={handleSubmitOrder} className="mt-4 pt-4 border-t border-stone-100">
+                    <button
+                      type="submit"
+                      disabled={submitting || cart.length === 0}
+                      className="w-full py-3.5 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      {submitting ? "送出中..." : "送出訂單"}
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
+
+            {/* 桌機：維持左右兩欄佈局 */}
+            <div className="hidden md:grid gap-6 md:grid-cols-2">
               <div className="space-y-4">
                 <div className="bg-white rounded-2xl shadow-sm border border-stone-200/80 p-5 overflow-hidden">
                   <h2 className="font-semibold text-stone-800 mb-3">選擇品項</h2>
