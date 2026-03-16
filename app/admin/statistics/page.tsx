@@ -137,6 +137,7 @@ export default function AdminStatisticsPage() {
   const [loading, setLoading] = useState(true);
   const [expandedSupplier, setExpandedSupplier] = useState<Set<string>>(new Set());
   const [expandedCategory, setExpandedCategory] = useState<Set<string>>(new Set());
+  const [textOutput, setTextOutput] = useState("");
 
   async function fetchList() {
     setLoading(true);
@@ -177,6 +178,20 @@ export default function AdminStatisticsPage() {
   };
 
   const handlePrint = () => window.print();
+
+  const handleExportText = () => {
+    const lines: string[] = [];
+    for (const sup of list) {
+      lines.push(sup.supplierName);
+      for (const cat of sup.categories) {
+        for (const row of cat.rows) {
+          lines.push(`    ${row.itemName}/${row.totalQty}/${row.unitName}`);
+        }
+      }
+      lines.push("");
+    }
+    setTextOutput(lines.join("\n").trimEnd());
+  };
 
   const flatRows = buildFlatRows(list, expandedSupplier, expandedCategory);
 
@@ -219,8 +234,26 @@ export default function AdminStatisticsPage() {
           >
             列印
           </button>
+          <button
+            type="button"
+            onClick={handleExportText}
+            className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
+          >
+            輸出文字
+          </button>
         </div>
       </div>
+
+      {textOutput && (
+        <div className="no-print mt-4 rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+          <div className="mb-2 text-sm font-medium text-stone-700">供應商訂單統計文字輸出（可選取複製）</div>
+          <textarea
+            className="h-48 w-full resize-none rounded-lg border border-stone-200 bg-stone-50 p-2 text-sm font-mono text-stone-800"
+            value={textOutput}
+            readOnly
+          />
+        </div>
+      )}
 
       <div className="mt-4 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm print:rounded-none print:border print:shadow-none">
         {loading ? (
