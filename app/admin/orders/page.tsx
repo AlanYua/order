@@ -24,10 +24,18 @@ type Order = {
   orderItems: OrderItem[];
 };
 
+function todayYYYYMMDD() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export default function AdminOrdersPage() {
   const [list, setList] = useState<Order[]>([]);
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [from, setFrom] = useState(() => todayYYYYMMDD());
+  const [to, setTo] = useState(() => todayYYYYMMDD());
   const [loading, setLoading] = useState(true);
 
   async function fetchList() {

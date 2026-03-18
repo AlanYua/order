@@ -4,6 +4,17 @@ import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+function parseDateOnlyLocal(s: string) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d)) return null;
+  const dt = new Date(y, mo - 1, d);
+  return isNaN(dt.getTime()) ? null : dt;
+}
+
 export async function GET(req: NextRequest) {
   const err = await requireAdmin();
   if (err) return err;
@@ -11,19 +22,25 @@ export async function GET(req: NextRequest) {
   const from = searchParams.get("from");
   const to = searchParams.get("to");
 
-  const where: { orderDate?: { gte?: Date; lte?: Date } } = {};
-  if (from) {
-    const d = new Date(from);
-    if (!isNaN(d.getTime())) where.orderDate = { ...where.orderDate, gte: d };
-  }
-  if (to) {
-    const d = new Date(to);
-    d.setHours(23, 59, 59, 999);
-    if (!isNaN(d.getTime())) where.orderDate = { ...where.orderDate, lte: d };
-  }
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+  const fromDate = from ? parseDateOnlyLocal(from) : null;
+  const toDate = to ? parseDateOnlyLocal(to) : null;
+
+  const gte = fromDate ?? todayStart;
+  const lte = (() => {
+    const base = toDate ?? todayEnd;
+    const end = new Date(base);
+    end.setHours(23, 59, 59, 999);
+    return end;
+  })();
+
+  const where: { orderDate: { gte: Date; lte: Date } } = { orderDate: { gte, lte } };
 
   const orders = await prisma.order.findMany({
-    where: Object.keys(where).length ? where : undefined,
+    where,
     include: {
       orderItems: {
         include: {
