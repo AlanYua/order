@@ -24,6 +24,8 @@ type Order = {
   address: string;
   createdAt: string;
   orderItems: OrderItem[];
+  sampleCount?: number;
+  itemCount?: number;
 };
 
 type EditRow = { id?: string; itemId: string; quantity: number; unitId: string };
@@ -206,6 +208,10 @@ export default function AdminOrderDetailPage({
   if (!order) return <p>{id ? "載入中..." : "訂單不存在"}</p>;
 
   const orderDateStr = new Date(order.orderDate).toLocaleDateString("zh-TW");
+  const itemCount = order.itemCount ?? order.orderItems.length;
+  const sampleCount =
+    order.sampleCount ??
+    new Set(order.orderItems.map((oi) => oi.item.id)).size;
 
   return (
     <div>
@@ -268,6 +274,8 @@ export default function AdminOrderDetailPage({
             <p><strong>姓名</strong> {order.customerName}</p>
             <p><strong>電話</strong> {order.phone}</p>
             <p><strong>地址</strong> {order.address}</p>
+            <p><strong>品項數</strong> {itemCount}</p>
+            <p><strong>樣數</strong> {sampleCount}</p>
             <table className="w-full mt-4 border-collapse border">
               <thead>
                 <tr className="bg-gray-100">
