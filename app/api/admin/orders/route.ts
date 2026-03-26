@@ -16,6 +16,11 @@ function parseDateOnlyLocal(s: string) {
   return isNaN(dt.getTime()) ? null : dt;
 }
 
+function computeSampleCount(orderItems: Array<{ itemId: string }> | null | undefined) {
+  if (!orderItems || orderItems.length === 0) return 0;
+  return new Set(orderItems.map((oi) => oi.itemId)).size;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const err = await requireAdmin();
@@ -50,7 +55,12 @@ export async function GET(req: NextRequest) {
         },
       },
     });
-    return NextResponse.json(list);
+    return NextResponse.json(
+      list.map((o) => ({
+        ...o,
+        sampleCount: computeSampleCount(o.orderItems),
+      }))
+    );
   } catch (e) {
     console.error("/api/admin/orders GET", e);
     return NextResponse.json(

@@ -3,6 +3,11 @@ import { prisma } from "@/lib/db";
 
 type OrderItemInput = { itemId: string; quantity: number; unitId: string };
 
+function computeSampleCount(orderItems: Array<{ itemId: string }> | null | undefined) {
+  if (!orderItems || orderItems.length === 0) return 0;
+  return new Set(orderItems.map((oi) => oi.itemId)).size;
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const {
@@ -81,5 +86,6 @@ export async function POST(req: NextRequest) {
     order,
     id: order.id,
     orderNumber: order.orderNumber ?? order.id,
+    sampleCount: computeSampleCount(order.orderItems),
   });
 }

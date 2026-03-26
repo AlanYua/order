@@ -11,6 +11,11 @@ type OrderItemPayload = {
   unitId: string;
 };
 
+function computeSampleCount(orderItems: Array<{ itemId: string }> | null | undefined) {
+  if (!orderItems || orderItems.length === 0) return 0;
+  return new Set(orderItems.map((oi) => oi.itemId)).size;
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -27,7 +32,7 @@ export async function GET(
     },
   });
   if (!order) return NextResponse.json({ error: "訂單不存在" }, { status: 404 });
-  return NextResponse.json(order);
+  return NextResponse.json({ ...order, sampleCount: computeSampleCount(order.orderItems) });
 }
 
 export async function PATCH(
@@ -144,7 +149,10 @@ export async function PATCH(
       },
     },
   });
-  return NextResponse.json(order!);
+  return NextResponse.json({
+    ...order!,
+    sampleCount: computeSampleCount(order!.orderItems),
+  });
 }
 
 export async function DELETE(
