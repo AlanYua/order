@@ -16,6 +16,10 @@ function computeSampleCount(orderItems: Array<{ itemId: string }> | null | undef
   return new Set(orderItems.map((oi) => oi.itemId)).size;
 }
 
+function computeItemCount(orderItems: Array<unknown> | null | undefined) {
+  return orderItems?.length ?? 0;
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -32,7 +36,11 @@ export async function GET(
     },
   });
   if (!order) return NextResponse.json({ error: "訂單不存在" }, { status: 404 });
-  return NextResponse.json({ ...order, sampleCount: computeSampleCount(order.orderItems) });
+  return NextResponse.json({
+    ...order,
+    sampleCount: computeSampleCount(order.orderItems),
+    itemCount: computeItemCount(order.orderItems),
+  });
 }
 
 export async function PATCH(
@@ -152,6 +160,7 @@ export async function PATCH(
   return NextResponse.json({
     ...order!,
     sampleCount: computeSampleCount(order!.orderItems),
+    itemCount: computeItemCount(order!.orderItems),
   });
 }
 
