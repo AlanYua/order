@@ -24,7 +24,6 @@ type Order = {
   address: string;
   createdAt: string;
   orderItems: OrderItem[];
-  sampleCount?: number;
   itemCount?: number;
 };
 
@@ -209,9 +208,6 @@ export default function AdminOrderDetailPage({
 
   const orderDateStr = new Date(order.orderDate).toLocaleDateString("zh-TW");
   const itemCount = order.itemCount ?? order.orderItems.length;
-  const sampleCount =
-    order.sampleCount ??
-    new Set(order.orderItems.map((oi) => oi.item.id)).size;
 
   return (
     <div>
@@ -275,7 +271,6 @@ export default function AdminOrderDetailPage({
             <p><strong>電話</strong> {order.phone}</p>
             <p><strong>地址</strong> {order.address}</p>
             <p><strong>品項數</strong> {itemCount}</p>
-            <p><strong>樣數</strong> {sampleCount}</p>
             <table className="w-full mt-4 border-collapse border">
               <thead>
                 <tr className="bg-gray-100">
