@@ -326,7 +326,6 @@ export default function AdminStatisticsPage() {
                       <span className="text-stone-400" aria-hidden>▼</span>
                     </span>
                   </th>
-                  <th className="border border-stone-200 border-l-2 border-l-blue-600 p-2 text-right text-sm font-semibold text-stone-800"></th>
                 </tr>
               </thead>
               <tbody>
@@ -380,13 +379,10 @@ export default function AdminStatisticsPage() {
                       </td>
                     ) : null}
                     <td className="border border-stone-200 p-2 text-stone-800">
-                      {row.itemName ? `${row.itemName}${row.qtyText}` : "—"}
+                      {row.itemName || "—"}
                     </td>
                     <td className="border border-stone-200 p-2 text-stone-700">
-                      {row.itemName ? row.qtyText : "—"}
-                    </td>
-                    <td className="border border-stone-200 border-l-2 border-l-blue-500 p-2 text-right font-medium text-stone-800">
-                      {"—"}
+                      {row.qtyText || "—"}
                     </td>
                   </tr>
                 ))}
