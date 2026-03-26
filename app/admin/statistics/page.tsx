@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 
 type DetailRow = { itemName: string; unitName: string; totalQty: number };
-type CategoryGroup = { categoryId: string; categoryName: string; rows: DetailRow[] };
+type MergedRow = { itemName: string; qtyText: string };
+type CategoryGroup = { categoryId: string; categoryName: string; rows: MergedRow[] };
 type SupplierGroup = {
   supplierId: string;
   supplierName: string;
@@ -22,8 +23,7 @@ type FlatRow =
       categoryRowSpan: number;
       isFirstRowOfCategory: true;
       itemName: string;
-      unitName: string;
-      totalQty: number;
+      qtyText: string;
     }
   | {
       kind: "category-only";
@@ -36,8 +36,7 @@ type FlatRow =
       categoryRowSpan: number;
       isFirstRowOfCategory: true;
       itemName: string;
-      unitName: string;
-      totalQty: number;
+      qtyText: string;
     }
   | {
       kind: "detail";
@@ -50,8 +49,7 @@ type FlatRow =
       categoryRowSpan: number;
       isFirstRowOfCategory: boolean;
       itemName: string;
-      unitName: string;
-      totalQty: number;
+      qtyText: string;
     };
 
 function todayYYYYMMDD() {
@@ -60,6 +58,29 @@ function todayYYYYMMDD() {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+function mergeSameItemDifferentUnits(rows: DetailRow[]): MergedRow[] {
+  const map = new Map<string, Map<string, number>>();
+  const order: string[] = [];
+
+  for (const r of rows) {
+    if (!map.has(r.itemName)) {
+      map.set(r.itemName, new Map());
+      order.push(r.itemName);
+    }
+    const unitMap = map.get(r.itemName)!;
+    unitMap.set(r.unitName, (unitMap.get(r.unitName) ?? 0) + r.totalQty);
+  }
+
+  return order.map((itemName) => {
+    const unitMap = map.get(itemName)!;
+    const qtyText = Array.from(unitMap.entries())
+      .filter(([, qty]) => qty > 0)
+      .map(([unitName, qty]) => `${qty}${unitName}`)
+      .join("");
+    return { itemName, qtyText };
+  });
 }
 
 function buildFlatRows(
@@ -82,8 +103,7 @@ function buildFlatRows(
         categoryRowSpan: 1,
         isFirstRowOfCategory: true,
         itemName: "",
-        unitName: "",
-        totalQty: 0,
+        qtyText: "",
       });
       continue;
     }
@@ -109,8 +129,7 @@ function buildFlatRows(
           categoryRowSpan: 1,
           isFirstRowOfCategory: true,
           itemName: "",
-          unitName: "",
-          totalQty: 0,
+          qtyText: "",
         });
         supFirst = false;
         continue;
@@ -128,8 +147,7 @@ function buildFlatRows(
           categoryRowSpan: i === 0 ? cat.rows.length : 0,
           isFirstRowOfCategory: i === 0,
           itemName: d.itemName,
-          unitName: d.unitName,
-          totalQty: d.totalQty,
+          qtyText: d.qtyText,
         });
         supFirst = false;
       }
@@ -155,10 +173,21 @@ export default function AdminStatisticsPage() {
     if (to) params.set("to", to);
     const res = await fetch(`/api/admin/statistics?${params}`);
     if (res.ok) {
-      const data = await res.json();
+      const raw = await res.json();
+      const data: SupplierGroup[] = (raw as any[]).map((s) => ({
+        supplierId: s.supplierId,
+        supplierName: s.supplierName,
+        categories: (s.categories as any[]).map((c) => ({
+          categoryId: c.categoryId,
+          categoryName: c.categoryName,
+          rows: mergeSameItemDifferentUnits(c.rows as DetailRow[]),
+        })),
+      }));
       setList(data);
-      setExpandedSupplier(new Set(data.map((s: SupplierGroup) => s.supplierId)));
-      setExpandedCategory(new Set(data.flatMap((s: SupplierGroup) => s.categories.map((c: CategoryGroup) => `${s.supplierId}-${c.categoryId}`))));
+      setExpandedSupplier(new Set(data.map((s) => s.supplierId)));
+      setExpandedCategory(
+        new Set(data.flatMap((s) => s.categories.map((c) => `${s.supplierId}-${c.categoryId}`)))
+      );
     }
     setLoading(false);
   }
@@ -193,7 +222,7 @@ export default function AdminStatisticsPage() {
       lines.push(sup.supplierName);
       for (const cat of sup.categories) {
         for (const row of cat.rows) {
-          lines.push(`    ${row.itemName}/${row.totalQty}/${row.unitName}`);
+          lines.push(`    ${row.itemName}${row.qtyText}`);
         }
       }
       lines.push("");
@@ -293,13 +322,11 @@ export default function AdminStatisticsPage() {
                   </th>
                   <th className="border border-stone-200 p-2 text-left text-sm font-semibold text-stone-800">
                     <span className="inline-flex items-center gap-1">
-                      單位
+                      統計
                       <span className="text-stone-400" aria-hidden>▼</span>
                     </span>
                   </th>
-                  <th className="border border-stone-200 border-l-2 border-l-blue-600 p-2 text-right text-sm font-semibold text-stone-800">
-                    合計
-                  </th>
+                  <th className="border border-stone-200 border-l-2 border-l-blue-600 p-2 text-right text-sm font-semibold text-stone-800"></th>
                 </tr>
               </thead>
               <tbody>
@@ -353,13 +380,13 @@ export default function AdminStatisticsPage() {
                       </td>
                     ) : null}
                     <td className="border border-stone-200 p-2 text-stone-800">
-                      {row.itemName || "—"}
+                      {row.itemName ? `${row.itemName}${row.qtyText}` : "—"}
                     </td>
                     <td className="border border-stone-200 p-2 text-stone-700">
-                      {row.unitName || "—"}
+                      {row.itemName ? row.qtyText : "—"}
                     </td>
                     <td className="border border-stone-200 border-l-2 border-l-blue-500 p-2 text-right font-medium text-stone-800">
-                      {row.totalQty > 0 ? row.totalQty : "—"}
+                      {"—"}
                     </td>
                   </tr>
                 ))}
