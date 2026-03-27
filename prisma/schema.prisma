@@ -64,6 +64,7 @@ model Order {
   id            String      @id @default(cuid())
   orderNumber   String?     @unique
   orderDate     DateTime
+  deliveryDate  DateTime    @default(now())
   customerName  String
   phone         String
   address       String

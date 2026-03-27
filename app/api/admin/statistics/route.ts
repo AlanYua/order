@@ -37,7 +37,9 @@ export async function GET(req: NextRequest) {
     return end;
   })();
 
-  const where: { orderDate: { gte: Date; lte: Date } } = { orderDate: { gte, lte } };
+  const where: { deliveryDate: { gte: Date; lte: Date } } = {
+    deliveryDate: { gte, lte },
+  };
 
   const orders = await prisma.order.findMany({
     where,

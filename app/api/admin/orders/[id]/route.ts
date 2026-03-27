@@ -20,6 +20,18 @@ function computeItemCount(orderItems: Array<unknown> | null | undefined) {
   return orderItems?.length ?? 0;
 }
 
+async function getAllowedDeliveryDates(): Promise<string[]> {
+  const row = await prisma.setting.findUnique({ where: { key: "delivery_dates" } });
+  if (!row?.value) return [];
+  try {
+    const v = JSON.parse(row.value) as unknown;
+    if (!Array.isArray(v)) return [];
+    return v.filter((s): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s));
+  } catch {
+    return [];
+  }
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -53,12 +65,14 @@ export async function PATCH(
   const body = await req.json();
   const {
     orderDate,
+    deliveryDate,
     customerName,
     phone,
     address,
     items,
   } = body as {
     orderDate?: string;
+    deliveryDate?: string;
     customerName?: string;
     phone?: string;
     address?: string;
@@ -80,6 +94,17 @@ export async function PATCH(
   const orderDateObj = orderDate ? new Date(orderDate) : existing.orderDate;
   if (isNaN(orderDateObj.getTime())) {
     return NextResponse.json({ error: "訂購日期格式錯誤" }, { status: 400 });
+  }
+
+  const deliveryDateObj = deliveryDate ? new Date(deliveryDate) : existing.deliveryDate;
+  if (isNaN(deliveryDateObj.getTime())) {
+    return NextResponse.json({ error: "外送日期格式錯誤" }, { status: 400 });
+  }
+  if (deliveryDate) {
+    const allowedDates = await getAllowedDeliveryDates();
+    if (allowedDates.length > 0 && !allowedDates.includes(deliveryDate)) {
+      return NextResponse.json({ error: "外送日期不在可選範圍" }, { status: 400 });
+    }
   }
 
   const validItems = Array.isArray(items)
@@ -115,6 +140,7 @@ export async function PATCH(
       where: { id },
       data: {
         orderDate: orderDateObj,
+        deliveryDate: deliveryDateObj,
         customerName: customerName.trim(),
         phone: phone.trim(),
         address: address.trim(),

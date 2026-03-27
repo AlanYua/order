@@ -23,6 +23,7 @@ type CartLine = {
 
 type OrderSnapshot = {
   orderDate: string;
+  deliveryDate: string;
   customerName: string;
   phone: string;
   address: string;
@@ -39,6 +40,8 @@ export default function HomePage() {
   const [step, setStep] = useState<1 | 2>(1);
   const [mobileTab, setMobileTab] = useState<"items" | "cart">("items");
   const [orderDate, setOrderDate] = useState("");
+  const [deliveryDate, setDeliveryDate] = useState("");
+  const [deliveryDateOptions, setDeliveryDateOptions] = useState<string[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -53,6 +56,7 @@ export default function HomePage() {
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
     setOrderDate(today);
+    setDeliveryDate(today);
   }, []);
 
   useEffect(() => {
@@ -68,6 +72,16 @@ export default function HomePage() {
     fetch("/api/settings/unit-conversion")
       .then((r) => r.json())
       .then((d) => setUnitConversion(d.text ?? ""));
+    fetch("/api/settings/delivery-dates")
+      .then((r) => r.json())
+      .then((d) => {
+        const dates = Array.isArray(d?.dates) ? (d.dates as string[]) : [];
+        setDeliveryDateOptions(dates);
+        if (dates.length > 0) setDeliveryDate((prev) => (dates.includes(prev) ? prev : dates[0]));
+      })
+      .catch(() => {
+        setDeliveryDateOptions([]);
+      });
   }, []);
 
   const categories = Array.from(new Map(items.map((i) => [i.category.id, i.category])).values());
@@ -118,6 +132,7 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderDate: orderDate || new Date().toISOString().slice(0, 10),
+          deliveryDate: deliveryDate || new Date().toISOString().slice(0, 10),
           customerName,
           phone,
           address,
@@ -134,6 +149,7 @@ export default function HomePage() {
         const unitNameMap = new Map(units.map((u) => [u.id, u.name]));
         setOrderSnapshot({
           orderDate: orderDate || new Date().toISOString().slice(0, 10),
+          deliveryDate: deliveryDate || new Date().toISOString().slice(0, 10),
           customerName,
           phone,
           address,
@@ -196,6 +212,7 @@ export default function HomePage() {
     }
     const snap = orderSnapshot;
     const orderDateStr = new Date(snap.orderDate).toLocaleDateString("zh-TW");
+    const deliveryDateStr = new Date(snap.deliveryDate).toLocaleDateString("zh-TW");
     return (
       <main className="min-h-screen bg-gradient-to-b from-emerald-50 to-white flex items-center justify-center p-6">
         <div className="w-full max-w-md text-center">
@@ -220,6 +237,7 @@ export default function HomePage() {
             </h2>
             <p className="text-sm text-stone-600"><strong>訂單編號</strong> {snap.orderNumber}</p>
             <p className="text-sm text-stone-600"><strong>訂購日期</strong> {orderDateStr}</p>
+            <p className="text-sm text-stone-600"><strong>外送日期</strong> {deliveryDateStr}</p>
             <p className="text-sm text-stone-600"><strong>姓名</strong> {snap.customerName}</p>
             <p className="text-sm text-stone-600"><strong>電話</strong> {snap.phone}</p>
             <p className="text-sm text-stone-600 mb-3"><strong>地址</strong> {snap.address}</p>
@@ -305,6 +323,31 @@ export default function HomePage() {
                   />
                 </label>
                 <label className="block">
+                  <span className="text-sm font-medium text-stone-600">外送日期</span>
+                  {deliveryDateOptions.length > 0 ? (
+                    <select
+                      value={deliveryDate}
+                      onChange={(e) => setDeliveryDate(e.target.value)}
+                      className="mt-1.5 w-full rounded-xl border border-stone-200 px-4 py-3 text-stone-800 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition"
+                      required
+                    >
+                      {deliveryDateOptions.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="date"
+                      value={deliveryDate}
+                      onChange={(e) => setDeliveryDate(e.target.value)}
+                      className="mt-1.5 w-full rounded-xl border border-stone-200 px-4 py-3 text-stone-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition"
+                      required
+                    />
+                  )}
+                </label>
+                <label className="block">
                   <span className="text-sm font-medium text-stone-600">姓名</span>
                   <input
                     value={customerName}
@@ -357,7 +400,7 @@ export default function HomePage() {
                 ← 修改訂單資訊
               </button>
               <span className="text-sm text-stone-500 truncate">
-                {orderDate} · {customerName} · {phone}
+                {deliveryDate || orderDate} · {customerName} · {phone}
               </span>
             </div>
 

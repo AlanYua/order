@@ -19,6 +19,7 @@ type Order = {
   id: string;
   orderNumber: string | null;
   orderDate: string;
+  deliveryDate: string;
   customerName: string;
   phone: string;
   address: string;
@@ -41,6 +42,7 @@ export default function AdminOrderDetailPage({
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     orderDate: "",
+    deliveryDate: "",
     customerName: "",
     phone: "",
     address: "",
@@ -77,6 +79,7 @@ export default function AdminOrderDetailPage({
     if (!order) return;
     setEditForm({
       orderDate: new Date(order.orderDate).toISOString().slice(0, 10),
+      deliveryDate: new Date(order.deliveryDate).toISOString().slice(0, 10),
       customerName: order.customerName,
       phone: order.phone,
       address: order.address,
@@ -131,6 +134,7 @@ export default function AdminOrderDetailPage({
         credentials: "include",
         body: JSON.stringify({
           orderDate: editForm.orderDate,
+          deliveryDate: editForm.deliveryDate,
           customerName: editForm.customerName.trim(),
           phone: editForm.phone.trim(),
           address: editForm.address.trim(),
@@ -207,6 +211,7 @@ export default function AdminOrderDetailPage({
   if (!order) return <p>{id ? "載入中..." : "訂單不存在"}</p>;
 
   const orderDateStr = new Date(order.orderDate).toLocaleDateString("zh-TW");
+  const deliveryDateStr = new Date(order.deliveryDate).toLocaleDateString("zh-TW");
   const itemCount = order.itemCount ?? order.orderItems.length;
 
   return (
@@ -267,6 +272,7 @@ export default function AdminOrderDetailPage({
             <h1 className="text-xl font-bold text-stone-900 mb-4">訂單</h1>
             <p><strong>訂單編號</strong> {order.orderNumber ?? order.id}</p>
             <p><strong>訂購日期</strong> {orderDateStr}</p>
+            <p><strong>外送日期</strong> {deliveryDateStr}</p>
             <p><strong>姓名</strong> {order.customerName}</p>
             <p><strong>電話</strong> {order.phone}</p>
             <p><strong>地址</strong> {order.address}</p>
@@ -301,6 +307,17 @@ export default function AdminOrderDetailPage({
                   value={editForm.orderDate}
                   onChange={(e) =>
                     setEditForm((f) => ({ ...f, orderDate: e.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-400"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium text-stone-600">外送日期</span>
+                <input
+                  type="date"
+                  value={editForm.deliveryDate}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, deliveryDate: e.target.value }))
                   }
                   className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-400"
                 />
@@ -447,6 +464,10 @@ export default function AdminOrderDetailPage({
               <span className="receipt-label">訂購日期</span>
               <span className="receipt-value">{orderDateStr}</span>
             </div>
+          <div className="receipt-row">
+            <span className="receipt-label">外送日期</span>
+            <span className="receipt-value">{deliveryDateStr}</span>
+          </div>
             <div className="receipt-row">
               <span className="receipt-label">姓名</span>
               <span className="receipt-value">{order.customerName}</span>

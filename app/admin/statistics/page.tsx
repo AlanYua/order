@@ -242,7 +242,7 @@ export default function AdminStatisticsPage() {
       <div className="no-print mt-6 rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-stone-600">從</span>
+            <span className="text-sm font-medium text-stone-600">外送日期從</span>
             <input
               type="date"
               value={from}
@@ -251,7 +251,7 @@ export default function AdminStatisticsPage() {
             />
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-stone-600">到</span>
+            <span className="text-sm font-medium text-stone-600">外送日期到</span>
             <input
               type="date"
               value={to}

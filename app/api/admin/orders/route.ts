@@ -44,11 +44,11 @@ export async function GET(req: NextRequest) {
       return end;
     })();
 
-    const where = { orderDate: { gte, lte } };
+    const where = { deliveryDate: { gte, lte } };
 
     const list = await prisma.order.findMany({
       where,
-      orderBy: [{ orderDate: "desc" }, { createdAt: "desc" }],
+      orderBy: [{ deliveryDate: "desc" }, { createdAt: "desc" }],
       include: {
         orderItems: {
           include: { item: true, unit: true },
