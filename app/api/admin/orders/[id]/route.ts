@@ -20,16 +20,63 @@ function computeItemCount(orderItems: Array<unknown> | null | undefined) {
   return orderItems?.length ?? 0;
 }
 
-async function getAllowedDeliveryDates(): Promise<string[]> {
-  const row = await prisma.setting.findUnique({ where: { key: "delivery_dates" } });
-  if (!row?.value) return [];
+async function readJsonSetting(key: string): Promise<unknown> {
+  const row = await prisma.setting.findUnique({ where: { key } });
+  if (!row?.value) return null;
   try {
-    const v = JSON.parse(row.value) as unknown;
-    if (!Array.isArray(v)) return [];
-    return v.filter((s): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s));
+    return JSON.parse(row.value);
   } catch {
-    return [];
+    return null;
   }
+}
+
+function normalizeWeekdays(input: unknown): number[] {
+  if (!Array.isArray(input)) return [];
+  const set = new Set<number>();
+  for (const v of input) {
+    const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
+    if (!Number.isInteger(n)) continue;
+    if (n < 0 || n > 6) continue;
+    set.add(n);
+  }
+  return Array.from(set);
+}
+
+function normalizeDates(input: unknown): string[] {
+  if (!Array.isArray(input)) return [];
+  const set = new Set<string>();
+  for (const v of input) {
+    if (typeof v !== "string") continue;
+    const s = v.trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) continue;
+    set.add(s);
+  }
+  return Array.from(set);
+}
+
+function weekdayLocalFromYYYYMMDD(s: string): number | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  const dt = new Date(y, mo - 1, d);
+  const w = dt.getDay();
+  return Number.isFinite(w) ? w : null;
+}
+
+async function assertDeliveryAllowed(deliveryDate: string) {
+  const blockedWeekdays = normalizeWeekdays(await readJsonSetting("delivery_blocked_weekdays"));
+  const blockedDates = normalizeDates(await readJsonSetting("delivery_blocked_dates"));
+
+  if (blockedDates.includes(deliveryDate)) {
+    return { ok: false as const, error: "此日期不外送" };
+  }
+  const w = weekdayLocalFromYYYYMMDD(deliveryDate);
+  if (w !== null && blockedWeekdays.includes(w)) {
+    return { ok: false as const, error: "此星期不外送" };
+  }
+  return { ok: true as const };
 }
 
 export async function GET(
@@ -101,9 +148,9 @@ export async function PATCH(
     return NextResponse.json({ error: "外送日期格式錯誤" }, { status: 400 });
   }
   if (deliveryDate) {
-    const allowedDates = await getAllowedDeliveryDates();
-    if (allowedDates.length > 0 && !allowedDates.includes(deliveryDate)) {
-      return NextResponse.json({ error: "外送日期不在可選範圍" }, { status: 400 });
+    const allowed = await assertDeliveryAllowed(deliveryDate);
+    if (!allowed.ok) {
+      return NextResponse.json({ error: allowed.error }, { status: 400 });
     }
   }
 

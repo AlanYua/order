@@ -41,7 +41,8 @@ export default function HomePage() {
   const [mobileTab, setMobileTab] = useState<"items" | "cart">("items");
   const [orderDate, setOrderDate] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
-  const [deliveryDateOptions, setDeliveryDateOptions] = useState<string[]>([]);
+  const [blockedWeekdays, setBlockedWeekdays] = useState<number[]>([]);
+  const [blockedDates, setBlockedDates] = useState<string[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -72,17 +73,36 @@ export default function HomePage() {
     fetch("/api/settings/unit-conversion")
       .then((r) => r.json())
       .then((d) => setUnitConversion(d.text ?? ""));
-    fetch("/api/settings/delivery-dates")
+    fetch("/api/settings/delivery-rules")
       .then((r) => r.json())
       .then((d) => {
-        const dates = Array.isArray(d?.dates) ? (d.dates as string[]) : [];
-        setDeliveryDateOptions(dates);
-        if (dates.length > 0) setDeliveryDate((prev) => (dates.includes(prev) ? prev : dates[0]));
+        setBlockedWeekdays(Array.isArray(d?.blockedWeekdays) ? (d.blockedWeekdays as number[]) : []);
+        setBlockedDates(Array.isArray(d?.blockedDates) ? (d.blockedDates as string[]) : []);
       })
       .catch(() => {
-        setDeliveryDateOptions([]);
+        setBlockedWeekdays([]);
+        setBlockedDates([]);
       });
   }, []);
+
+  function weekdayLocalFromYYYYMMDD(s: string): number | null {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (!m) return null;
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    const dt = new Date(y, mo - 1, d);
+    const w = dt.getDay();
+    return Number.isFinite(w) ? w : null;
+  }
+
+  function isDeliveryBlocked(dateStr: string) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+    if (blockedDates.includes(dateStr)) return true;
+    const w = weekdayLocalFromYYYYMMDD(dateStr);
+    if (w !== null && blockedWeekdays.includes(w)) return true;
+    return false;
+  }
 
   const categories = Array.from(new Map(items.map((i) => [i.category.id, i.category])).values());
   const filtered = !tabCategoryId
@@ -121,6 +141,10 @@ export default function HomePage() {
 
   async function handleSubmitOrder(e: React.FormEvent) {
     e.preventDefault();
+    if (isDeliveryBlocked(deliveryDate || "")) {
+      alert("此外送日期不提供外送，請改選其他日期");
+      return;
+    }
     if (cart.length === 0) {
       alert("請至少選擇一項品項");
       return;
@@ -324,27 +348,19 @@ export default function HomePage() {
                 </label>
                 <label className="block">
                   <span className="text-sm font-medium text-stone-600">外送日期</span>
-                  {deliveryDateOptions.length > 0 ? (
-                    <select
-                      value={deliveryDate}
-                      onChange={(e) => setDeliveryDate(e.target.value)}
-                      className="mt-1.5 w-full rounded-xl border border-stone-200 px-4 py-3 text-stone-800 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition"
-                      required
-                    >
-                      {deliveryDateOptions.map((d) => (
-                        <option key={d} value={d}>
-                          {d}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type="date"
-                      value={deliveryDate}
-                      onChange={(e) => setDeliveryDate(e.target.value)}
-                      className="mt-1.5 w-full rounded-xl border border-stone-200 px-4 py-3 text-stone-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition"
-                      required
-                    />
+                  <input
+                    type="date"
+                    value={deliveryDate}
+                    onChange={(e) => setDeliveryDate(e.target.value)}
+                    className={`mt-1.5 w-full rounded-xl border px-4 py-3 text-stone-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition ${
+                      deliveryDate && isDeliveryBlocked(deliveryDate)
+                        ? "border-red-300 bg-red-50"
+                        : "border-stone-200"
+                    }`}
+                    required
+                  />
+                  {deliveryDate && isDeliveryBlocked(deliveryDate) && (
+                    <p className="mt-1.5 text-sm text-red-600">此日期不外送，請改選其他日期。</p>
                   )}
                 </label>
                 <label className="block">
