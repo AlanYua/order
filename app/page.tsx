@@ -167,7 +167,16 @@ export default function HomePage() {
           })),
         }),
       });
-      const data = await res.json();
+      const raw = await res.text();
+      let data: { error?: string; orderNumber?: string; id?: string } = {};
+      if (raw) {
+        try {
+          data = JSON.parse(raw) as typeof data;
+        } catch {
+          alert(`伺服器回應異常（${res.status}），請聯絡管理員或稍後再試`);
+          return;
+        }
+      }
       if (res.ok) {
         const num = data.orderNumber ?? data.id;
         const unitNameMap = new Map(units.map((u) => [u.id, u.name]));
@@ -187,8 +196,10 @@ export default function HomePage() {
         setOrderNumber(num);
         setCart([]);
       } else {
-        alert(data.error ?? "送出失敗");
+        alert(data.error ?? `送出失敗（${res.status}）`);
       }
+    } catch {
+      alert("無法連線或請求逾時，請檢查網路後再試");
     } finally {
       setSubmitting(false);
     }
