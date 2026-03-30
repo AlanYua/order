@@ -35,8 +35,8 @@ function todayYYYYMMDD() {
 
 export default function AdminOrdersPage() {
   const [list, setList] = useState<Order[]>([]);
-  const [from, setFrom] = useState(() => todayYYYYMMDD());
-  const [to, setTo] = useState(() => todayYYYYMMDD());
+  const [from, setFrom] = useState(() => "");
+  const [to, setTo] = useState(() => "");
   const [loading, setLoading] = useState(true);
 
   async function fetchList() {
@@ -51,7 +51,29 @@ export default function AdminOrdersPage() {
   }
 
   useEffect(() => {
-    fetchList();
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/settings/next-delivery-date", {
+          credentials: "include",
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { date?: string };
+          const d = typeof data?.date === "string" ? data.date : "";
+          setFrom(d);
+          setTo(d);
+        } else {
+          const t = todayYYYYMMDD();
+          setFrom(t);
+          setTo(t);
+        }
+      } catch {
+        const t = todayYYYYMMDD();
+        setFrom(t);
+        setTo(t);
+      } finally {
+        fetchList();
+      }
+    })();
   }, []);
 
   return (

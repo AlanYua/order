@@ -178,7 +178,7 @@ export default function HomePage() {
         }
       }
       if (res.ok) {
-        const num = data.orderNumber ?? data.id;
+        const num = data.orderNumber ?? data.id ?? "";
         const unitNameMap = new Map(units.map((u) => [u.id, u.name]));
         setOrderSnapshot({
           orderDate: orderDate || new Date().toISOString().slice(0, 10),

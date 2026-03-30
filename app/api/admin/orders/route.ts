@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getDayRangeLocal, getNextDeliverableYYYYMMDDLocal } from "@/lib/nextDeliveryDate";
 
 export const dynamic = "force-dynamic";
 
@@ -29,16 +30,18 @@ export async function GET(req: NextRequest) {
     const from = searchParams.get("from");
     const to = searchParams.get("to");
 
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-
     const fromDate = from ? parseDateOnlyLocal(from) : null;
     const toDate = to ? parseDateOnlyLocal(to) : null;
 
-    const gte = fromDate ?? todayStart;
+    const defaultRange = await (async () => {
+      const next = await getNextDeliverableYYYYMMDDLocal();
+      const r = await getDayRangeLocal(next);
+      return r ?? null;
+    })();
+
+    const gte = fromDate ?? defaultRange?.start ?? new Date(0);
     const lte = (() => {
-      const base = toDate ?? todayEnd;
+      const base = toDate ?? defaultRange?.end ?? new Date();
       const end = new Date(base);
       end.setHours(23, 59, 59, 999);
       return end;
