@@ -47,6 +47,7 @@ export default function HomePage() {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [tabCategoryId, setTabCategoryId] = useState<string>("");
+  const [itemSearch, setItemSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [orderSnapshot, setOrderSnapshot] = useState<OrderSnapshot | null>(null);
@@ -105,9 +106,25 @@ export default function HomePage() {
   }
 
   const categories = Array.from(new Map(items.map((i) => [i.category.id, i.category])).values());
-  const filtered = !tabCategoryId
+  const searchNorm = itemSearch.trim().toLowerCase();
+  const byCategory = !tabCategoryId
     ? items
     : items.filter((i) => i.category.id === tabCategoryId);
+  const filtered =
+    searchNorm === ""
+      ? byCategory
+      : byCategory.filter(
+          (i) =>
+            i.name.toLowerCase().includes(searchNorm) ||
+            i.category.name.toLowerCase().includes(searchNorm) ||
+            i.season.name.toLowerCase().includes(searchNorm)
+        );
+  const emptyItemsMessage =
+    filtered.length > 0
+      ? null
+      : searchNorm !== "" && byCategory.length > 0
+        ? "找不到符合的品項"
+        : "此分類暫無品項";
 
   function addToCart(item: Item, qty: number, unitId: string) {
     if (qty <= 0) return;
@@ -459,6 +476,21 @@ export default function HomePage() {
               ))}
             </div>
 
+            <div className="mb-4">
+              <label htmlFor="item-search" className="sr-only">
+                搜尋品項
+              </label>
+              <input
+                id="item-search"
+                type="search"
+                value={itemSearch}
+                onChange={(e) => setItemSearch(e.target.value)}
+                placeholder="搜尋商品名稱、分類、季節…"
+                autoComplete="off"
+                className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition"
+              />
+            </div>
+
             {/* 手機：品項 / 已選 分頁切換，避免一直往下捲 */}
             <div className="md:hidden space-y-4">
               <div className="flex rounded-xl bg-stone-100 p-1 text-sm font-medium">
@@ -499,8 +531,8 @@ export default function HomePage() {
                           addToCart={addToCart}
                         />
                       ))}
-                      {filtered.length === 0 && (
-                        <li className="text-stone-400 py-4 text-center text-sm">此分類暫無品項</li>
+                      {emptyItemsMessage && (
+                        <li className="text-stone-400 py-4 text-center text-sm">{emptyItemsMessage}</li>
                       )}
                     </ul>
                   </div>
@@ -610,8 +642,8 @@ export default function HomePage() {
                         addToCart={addToCart}
                       />
                     ))}
-                    {filtered.length === 0 && (
-                      <li className="text-stone-400 py-4 text-center text-sm">此分類暫無品項</li>
+                    {emptyItemsMessage && (
+                      <li className="text-stone-400 py-4 text-center text-sm">{emptyItemsMessage}</li>
                     )}
                   </ul>
                 </div>
