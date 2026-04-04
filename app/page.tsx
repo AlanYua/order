@@ -346,15 +346,14 @@ export default function HomePage() {
           <p className="text-stone-500 mt-1">填寫資料後選擇品項即可送出</p>
         </div>
 
-        <div className="mb-6 bg-amber-50/80 border border-amber-200/80 rounded-2xl p-5">
-          <h3 className="text-sm font-semibold text-amber-800 mb-2">公告欄</h3>
-          <p className="text-sm text-amber-900/90 whitespace-pre-line">
-            {announcement || "歡迎訂購，請於訂購日期前一日完成下單。\n若有特殊需求或疑問請來電告知。"}
-          </p>
-        </div>
-
         {step === 1 && (
           <>
+            <div className="mb-6 bg-amber-50/80 border border-amber-200/80 rounded-2xl p-5">
+              <h3 className="text-sm font-semibold text-amber-800 mb-2">公告欄</h3>
+              <p className="text-sm text-amber-900/90 whitespace-pre-line">
+                {announcement || "歡迎訂購，請於訂購日期前一日完成下單。\n若有特殊需求或疑問請來電告知。"}
+              </p>
+            </div>
             <div className="bg-white rounded-2xl shadow-sm border border-stone-200/80 p-6 md:p-8">
               <h2 className="text-lg font-semibold text-stone-800 mb-5">訂單資訊</h2>
               <form
