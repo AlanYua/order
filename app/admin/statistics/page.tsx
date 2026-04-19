@@ -98,12 +98,13 @@ function mergeSameItemDifferentUnits(rows: DetailRow[]): MergedRow[] {
 
 const ORDER_SUFFIX_DISPLAY_MAX = 24;
 
-function formatOrderSuffixesLine(suffixes: string[]) {
+/** 熱感紙用：只顯示尾碼斜線分隔，不帶「訂單」字樣 */
+function formatOrderSuffixesCell(suffixes: string[]) {
   if (suffixes.length === 0) return "";
   const shown = suffixes.slice(0, ORDER_SUFFIX_DISPLAY_MAX);
   const more = suffixes.length - shown.length;
   const tail = more > 0 ? ` …共${suffixes.length}筆` : "";
-  return `訂單 ${shown.join("/")}${tail}`;
+  return `${shown.join("/")}${tail}`;
 }
 
 function buildFlatRows(
@@ -173,7 +174,7 @@ function buildFlatRows(
           isFirstRowOfCategory: i === 0,
           itemName: d.itemName,
           qtyText: d.qtyText,
-          orderSuffixesLine: formatOrderSuffixesLine(d.orderSuffixes),
+          orderSuffixesLine: formatOrderSuffixesCell(d.orderSuffixes),
         });
         supFirst = false;
       }
@@ -271,9 +272,8 @@ export default function AdminStatisticsPage() {
       for (const cat of sup.categories) {
         for (const row of cat.rows) {
           lines.push(`    ${row.itemName}${row.qtyText}`);
-          if (row.orderSuffixes.length) {
-            lines.push(`        ${formatOrderSuffixesLine(row.orderSuffixes)}`);
-          }
+          const suf = formatOrderSuffixesCell(row.orderSuffixes);
+          if (suf) lines.push(`        ${suf}`);
         }
       }
       lines.push("");
@@ -377,6 +377,12 @@ export default function AdminStatisticsPage() {
                       <span className="text-stone-400" aria-hidden>▼</span>
                     </span>
                   </th>
+                  <th
+                    className="border border-stone-200 p-2 text-left text-sm font-semibold text-stone-800 whitespace-nowrap"
+                    title="訂單編號末段（隨機碼），斜線分隔"
+                  >
+                    尾碼
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -430,21 +436,13 @@ export default function AdminStatisticsPage() {
                       </td>
                     ) : null}
                     <td className="border border-stone-200 p-2 text-stone-800">
-                      {row.itemName ? (
-                        <div className="flex flex-col gap-0.5">
-                          <span>{row.itemName}</span>
-                          {row.orderSuffixesLine ? (
-                            <span className="text-xs font-normal text-stone-500 print:text-[11px]">
-                              {row.orderSuffixesLine}
-                            </span>
-                          ) : null}
-                        </div>
-                      ) : (
-                        "—"
-                      )}
+                      {row.itemName || "—"}
                     </td>
                     <td className="border border-stone-200 p-2 text-stone-700">
                       {row.qtyText || "—"}
+                    </td>
+                    <td className="border border-stone-200 p-2 text-stone-700 whitespace-nowrap text-sm tabular-nums print:text-[12px]">
+                      {row.orderSuffixesLine || "—"}
                     </td>
                   </tr>
                 ))}
