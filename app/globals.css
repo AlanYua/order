@@ -123,6 +123,10 @@
   .statistics-report .print-hide-col {
     display: none !important;
   }
+  /* 統計報表：後台勾掉「列印訂單尾碼」時隱藏尾碼欄（僅列印） */
+  #statistics-report[data-print-hide-order-suffix] .statistics-order-suffix-col {
+    display: none !important;
+  }
 }
 
 /* 收據「以圖列印」用：與 @media print 內 .thermal-receipt 相同版型，供 html2canvas 擷取（避免實機亂碼） */

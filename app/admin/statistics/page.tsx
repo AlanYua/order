@@ -191,6 +191,8 @@ export default function AdminStatisticsPage() {
   const [expandedSupplier, setExpandedSupplier] = useState<Set<string>>(new Set());
   const [expandedCategory, setExpandedCategory] = useState<Set<string>>(new Set());
   const [textOutput, setTextOutput] = useState("");
+  /** 列印（與文字輸出）是否包含訂單尾碼欄／尾碼行 */
+  const [printOrderSuffix, setPrintOrderSuffix] = useState(true);
 
   async function fetchList() {
     setLoading(true);
@@ -272,8 +274,10 @@ export default function AdminStatisticsPage() {
       for (const cat of sup.categories) {
         for (const row of cat.rows) {
           lines.push(`    ${row.itemName}${row.qtyText}`);
-          const suf = formatOrderSuffixesCell(row.orderSuffixes);
-          if (suf) lines.push(`        ${suf}`);
+          if (printOrderSuffix) {
+            const suf = formatOrderSuffixesCell(row.orderSuffixes);
+            if (suf) lines.push(`        ${suf}`);
+          }
         }
       }
       lines.push("");
@@ -316,6 +320,15 @@ export default function AdminStatisticsPage() {
           >
             篩選
           </button>
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-700">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-stone-300 text-stone-800 focus:ring-stone-400"
+              checked={printOrderSuffix}
+              onChange={(e) => setPrintOrderSuffix(e.target.checked)}
+            />
+            <span>列印訂單尾碼</span>
+          </label>
           <button
             onClick={handlePrint}
             className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
@@ -349,7 +362,11 @@ export default function AdminStatisticsPage() {
         ) : list.length === 0 ? (
           <div className="p-8 text-center text-stone-500">此區間無訂單資料</div>
         ) : (
-          <div id="statistics-report" className="statistics-report">
+          <div
+            id="statistics-report"
+            className="statistics-report"
+            data-print-hide-order-suffix={printOrderSuffix ? undefined : ""}
+          >
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b-2 border-stone-300 bg-stone-100">
@@ -378,7 +395,7 @@ export default function AdminStatisticsPage() {
                     </span>
                   </th>
                   <th
-                    className="border border-stone-200 p-2 text-left text-sm font-semibold text-stone-800 whitespace-nowrap"
+                    className="statistics-order-suffix-col border border-stone-200 p-2 text-left text-sm font-semibold text-stone-800 whitespace-nowrap"
                     title="訂單編號末段（隨機碼），斜線分隔"
                   >
                     尾碼
@@ -441,7 +458,7 @@ export default function AdminStatisticsPage() {
                     <td className="border border-stone-200 p-2 text-stone-700">
                       {row.qtyText || "—"}
                     </td>
-                    <td className="border border-stone-200 p-2 text-stone-700 whitespace-nowrap text-sm tabular-nums print:text-[12px]">
+                    <td className="statistics-order-suffix-col border border-stone-200 p-2 text-stone-700 whitespace-nowrap text-sm tabular-nums print:text-[12px]">
                       {row.orderSuffixesLine || "—"}
                     </td>
                   </tr>
