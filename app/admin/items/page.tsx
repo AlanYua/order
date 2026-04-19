@@ -27,6 +27,8 @@ export default function AdminItemsPage() {
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [filter, setFilter] = useState({ categoryId: "", seasonId: "", supplierId: "" });
+  const [itemQuery, setItemQuery] = useState("");
+  const [debouncedItemQuery, setDebouncedItemQuery] = useState("");
   const [form, setForm] = useState({
     name: "",
     unitId: "",
@@ -56,6 +58,7 @@ export default function AdminItemsPage() {
     if (filter.categoryId) params.set("categoryId", filter.categoryId);
     if (filter.seasonId) params.set("seasonId", filter.seasonId);
     if (filter.supplierId) params.set("supplierId", filter.supplierId);
+    if (debouncedItemQuery) params.set("q", debouncedItemQuery);
     const res = await fetch(`/api/admin/items?${params}`);
     if (res.ok) setList(await res.json());
     setLoading(false);
@@ -66,8 +69,13 @@ export default function AdminItemsPage() {
   }, []);
 
   useEffect(() => {
+    const t = setTimeout(() => setDebouncedItemQuery(itemQuery.trim()), 300);
+    return () => clearTimeout(t);
+  }, [itemQuery]);
+
+  useEffect(() => {
     fetchList();
-  }, [filter.categoryId, filter.seasonId, filter.supplierId]);
+  }, [filter.categoryId, filter.seasonId, filter.supplierId, debouncedItemQuery]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -167,6 +175,14 @@ export default function AdminItemsPage() {
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
+          <input
+            type="search"
+            value={itemQuery}
+            onChange={(e) => setItemQuery(e.target.value)}
+            placeholder="品項查詢"
+            aria-label="品項查詢"
+            className={`${inputCls} min-w-[140px] flex-1 max-w-xs`}
+          />
         </div>
       </div>
       <form onSubmit={handleCreate} className="mt-4 rounded-xl border border-stone-200 bg-white p-4 shadow-sm space-y-3 max-w-2xl">

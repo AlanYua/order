@@ -5,6 +5,17 @@ import { getDayRangeLocal, getNextDeliverableYYYYMMDDLocal } from "@/lib/nextDel
 
 export const dynamic = "force-dynamic";
 
+/** 訂單對外辨識用短碼：優先取編號 hyphen 後段的最後 3 字元（隨機三位），否則取 id 末三碼 */
+function orderPublicSuffix(order: { orderNumber: string | null; id: string }) {
+  if (order.orderNumber) {
+    const parts = order.orderNumber.split("-");
+    const last = parts[parts.length - 1] ?? "";
+    if (last.length >= 3) return last.slice(-3);
+    return order.orderNumber.slice(-3);
+  }
+  return order.id.slice(-3);
+}
+
 function parseDateOnlyLocal(s: string) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
   if (!m) return null;
@@ -59,13 +70,21 @@ export async function GET(req: NextRequest) {
   const format = searchParams.get("format");
 
   if (format === "detail") {
-    // 供應商 → 分類 → 明細(品名, 單位, 合計)
-    type DetailRow = { itemName: string; unitName: string; totalQty: number };
+    // 供應商 → 分類 → 明細(品名, 單位, 合計, 訂單短碼)
+    type DetailRow = {
+      itemName: string;
+      unitName: string;
+      totalQty: number;
+      orderSuffixes: string[];
+    };
     type CatGroup = { categoryId: string; categoryName: string; rows: DetailRow[] };
     type SupGroup = { supplierId: string; supplierName: string; categories: CatGroup[] };
     const bySupplier: Record<string, SupGroup> = {};
+    /** 內部用：同一品項+單位彙總時收集訂單短碼 */
+    const suffixSets = new WeakMap<DetailRow, Set<string>>();
 
     for (const order of orders) {
+      const suffix = orderPublicSuffix(order);
       for (const oi of order.orderItems) {
         const sid = oi.item.supplierId;
         const sname = oi.item.supplier.name;
@@ -87,8 +106,24 @@ export async function GET(req: NextRequest) {
         const detail = cat.rows.find(
           (r) => r.itemName === itemName && r.unitName === unitName
         );
-        if (detail) detail.totalQty += qty;
-        else cat.rows.push({ itemName, unitName, totalQty: qty });
+        if (detail) {
+          detail.totalQty += qty;
+          suffixSets.get(detail)!.add(suffix);
+        } else {
+          const row: DetailRow = { itemName, unitName, totalQty: qty, orderSuffixes: [] };
+          const set = new Set<string>([suffix]);
+          suffixSets.set(row, set);
+          cat.rows.push(row);
+        }
+      }
+    }
+
+    for (const s of Object.values(bySupplier)) {
+      for (const c of s.categories) {
+        for (const r of c.rows) {
+          const set = suffixSets.get(r);
+          r.orderSuffixes = set ? Array.from(set).sort() : [];
+        }
       }
     }
 

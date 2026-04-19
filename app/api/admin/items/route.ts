@@ -11,8 +11,14 @@ export async function GET(req: NextRequest) {
   const categoryId = searchParams.get("categoryId") ?? undefined;
   const seasonId = searchParams.get("seasonId") ?? undefined;
   const supplierId = searchParams.get("supplierId") ?? undefined;
+  const q = searchParams.get("q")?.trim();
   const list = await prisma.item.findMany({
-    where: { categoryId, seasonId, supplierId },
+    where: {
+      categoryId,
+      seasonId,
+      supplierId,
+      ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
+    },
     orderBy: { name: "asc" },
     include: { unit: true, category: true, season: true, supplier: true },
   });

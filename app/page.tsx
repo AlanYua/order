@@ -31,6 +31,11 @@ type OrderSnapshot = {
   lines: { itemName: string; unitName: string; quantity: number }[];
 };
 
+/** 公開查詢：僅品項明細 */
+type OrderLookupResult = {
+  lines: { itemName: string; unitName: string; quantity: number }[];
+};
+
 const DEFAULT_UNIT_CONVERSION = "常用換算：1斤＝600g、1包＝1份、1顆＝1粒、1把＝約300g";
 
 export default function HomePage() {
@@ -54,6 +59,10 @@ export default function HomePage() {
   const receiptRef = useRef<HTMLDivElement>(null);
   const [announcement, setAnnouncement] = useState("");
   const [unitConversion, setUnitConversion] = useState("");
+  const [lookupInput, setLookupInput] = useState("");
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState<string | null>(null);
+  const [lookupResult, setLookupResult] = useState<OrderLookupResult | null>(null);
 
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -219,6 +228,49 @@ export default function HomePage() {
       alert("無法連線或請求逾時，請檢查網路後再試");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleLookupOrder(e: React.FormEvent) {
+    e.preventDefault();
+    setLookupError(null);
+    setLookupResult(null);
+    const q = lookupInput.trim();
+    if (!q) {
+      setLookupError("請輸入訂單編號");
+      return;
+    }
+    setLookupLoading(true);
+    try {
+      const res = await fetch(
+        `/api/orders/lookup?orderNumber=${encodeURIComponent(q)}`
+      );
+      const raw = await res.text();
+      let data: {
+        error?: string;
+        lines?: { itemName: string; unitName: string; quantity: number }[];
+      } = {};
+      if (raw) {
+        try {
+          data = JSON.parse(raw) as typeof data;
+        } catch {
+          setLookupError("伺服器回應異常，請稍後再試");
+          return;
+        }
+      }
+      if (!res.ok) {
+        setLookupError(data.error ?? `查詢失敗（${res.status}）`);
+        return;
+      }
+      if (!Array.isArray(data.lines)) {
+        setLookupError("回傳資料不完整");
+        return;
+      }
+      setLookupResult({ lines: data.lines });
+    } catch {
+      setLookupError("無法連線或請求逾時，請檢查網路後再試");
+    } finally {
+      setLookupLoading(false);
     }
   }
 
@@ -736,6 +788,64 @@ export default function HomePage() {
             </div>
           </>
         )}
+
+        <section className="mt-12 pt-8 border-t border-stone-200/80">
+          <h2 className="text-lg font-semibold text-stone-800 mb-1">訂單查詢</h2>
+          <p className="text-sm text-stone-500 mb-4">
+            輸入完整訂單編號僅顯示品項（不含姓名、電話、地址）。
+          </p>
+          <form onSubmit={handleLookupOrder} className="flex flex-col sm:flex-row gap-2 sm:items-stretch">
+            <input
+              type="text"
+              value={lookupInput}
+              onChange={(e) => setLookupInput(e.target.value)}
+              placeholder="例如 20260419-456"
+              autoComplete="off"
+              spellCheck={false}
+              className="flex-1 rounded-xl border border-stone-200 bg-white px-4 py-3 text-stone-800 font-mono text-sm placeholder:text-stone-400 placeholder:font-sans focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition"
+            />
+            <button
+              type="submit"
+              disabled={lookupLoading}
+              className="shrink-0 rounded-xl bg-stone-700 text-white px-6 py-3 text-sm font-medium hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              {lookupLoading ? "查詢中…" : "查詢"}
+            </button>
+          </form>
+          {lookupError && (
+            <p className="mt-3 text-sm text-red-600" role="alert">
+              {lookupError}
+            </p>
+          )}
+          {lookupResult && (
+            <div
+              className="mt-5 w-full max-w-md bg-white rounded-xl border border-stone-200 p-5 text-left shadow-sm"
+              style={{ fontFamily: "system-ui, sans-serif" }}
+            >
+              <h3 className="text-base font-bold text-stone-800 border-b border-stone-200 pb-2 mb-3">
+                品項
+              </h3>
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-b border-stone-200 text-stone-600">
+                    <th className="text-left py-1.5">品項</th>
+                    <th className="text-right py-1.5">數量</th>
+                    <th className="text-left py-1.5">單位</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lookupResult.lines.map((line, i) => (
+                    <tr key={i} className="border-b border-stone-100">
+                      <td className="py-1.5 text-stone-800">{line.itemName}</td>
+                      <td className="text-right py-1.5 font-medium">{line.quantity}</td>
+                      <td className="py-1.5 text-stone-600">{line.unitName}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );

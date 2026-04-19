@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from "react";
 
-type DetailRow = { itemName: string; unitName: string; totalQty: number };
-type MergedRow = { itemName: string; qtyText: string };
+type DetailRow = {
+  itemName: string;
+  unitName: string;
+  totalQty: number;
+  orderSuffixes?: string[];
+};
+type MergedRow = { itemName: string; qtyText: string; orderSuffixes: string[] };
 type CategoryGroup = { categoryId: string; categoryName: string; rows: MergedRow[] };
 type SupplierGroup = {
   supplierId: string;
@@ -24,6 +29,7 @@ type FlatRow =
       isFirstRowOfCategory: true;
       itemName: string;
       qtyText: string;
+      orderSuffixesLine: string;
     }
   | {
       kind: "category-only";
@@ -37,6 +43,7 @@ type FlatRow =
       isFirstRowOfCategory: true;
       itemName: string;
       qtyText: string;
+      orderSuffixesLine: string;
     }
   | {
       kind: "detail";
@@ -50,6 +57,7 @@ type FlatRow =
       isFirstRowOfCategory: boolean;
       itemName: string;
       qtyText: string;
+      orderSuffixesLine: string;
     };
 
 function todayYYYYMMDD() {
@@ -62,15 +70,19 @@ function todayYYYYMMDD() {
 
 function mergeSameItemDifferentUnits(rows: DetailRow[]): MergedRow[] {
   const map = new Map<string, Map<string, number>>();
+  const suffixMap = new Map<string, Set<string>>();
   const order: string[] = [];
 
   for (const r of rows) {
     if (!map.has(r.itemName)) {
       map.set(r.itemName, new Map());
+      suffixMap.set(r.itemName, new Set());
       order.push(r.itemName);
     }
     const unitMap = map.get(r.itemName)!;
     unitMap.set(r.unitName, (unitMap.get(r.unitName) ?? 0) + r.totalQty);
+    const suf = suffixMap.get(r.itemName)!;
+    for (const x of r.orderSuffixes ?? []) suf.add(x);
   }
 
   return order.map((itemName) => {
@@ -79,8 +91,19 @@ function mergeSameItemDifferentUnits(rows: DetailRow[]): MergedRow[] {
       .filter(([, qty]) => qty > 0)
       .map(([unitName, qty]) => `${qty}${unitName}`)
       .join("");
-    return { itemName, qtyText };
+    const orderSuffixes = Array.from(suffixMap.get(itemName) ?? []).sort();
+    return { itemName, qtyText, orderSuffixes };
   });
+}
+
+const ORDER_SUFFIX_DISPLAY_MAX = 24;
+
+function formatOrderSuffixesLine(suffixes: string[]) {
+  if (suffixes.length === 0) return "";
+  const shown = suffixes.slice(0, ORDER_SUFFIX_DISPLAY_MAX);
+  const more = suffixes.length - shown.length;
+  const tail = more > 0 ? ` …共${suffixes.length}筆` : "";
+  return `訂單 ${shown.join("/")}${tail}`;
 }
 
 function buildFlatRows(
@@ -104,6 +127,7 @@ function buildFlatRows(
         isFirstRowOfCategory: true,
         itemName: "",
         qtyText: "",
+        orderSuffixesLine: "",
       });
       continue;
     }
@@ -130,6 +154,7 @@ function buildFlatRows(
           isFirstRowOfCategory: true,
           itemName: "",
           qtyText: "",
+          orderSuffixesLine: "",
         });
         supFirst = false;
         continue;
@@ -148,6 +173,7 @@ function buildFlatRows(
           isFirstRowOfCategory: i === 0,
           itemName: d.itemName,
           qtyText: d.qtyText,
+          orderSuffixesLine: formatOrderSuffixesLine(d.orderSuffixes),
         });
         supFirst = false;
       }
@@ -245,6 +271,9 @@ export default function AdminStatisticsPage() {
       for (const cat of sup.categories) {
         for (const row of cat.rows) {
           lines.push(`    ${row.itemName}${row.qtyText}`);
+          if (row.orderSuffixes.length) {
+            lines.push(`        ${formatOrderSuffixesLine(row.orderSuffixes)}`);
+          }
         }
       }
       lines.push("");
@@ -401,7 +430,18 @@ export default function AdminStatisticsPage() {
                       </td>
                     ) : null}
                     <td className="border border-stone-200 p-2 text-stone-800">
-                      {row.itemName || "—"}
+                      {row.itemName ? (
+                        <div className="flex flex-col gap-0.5">
+                          <span>{row.itemName}</span>
+                          {row.orderSuffixesLine ? (
+                            <span className="text-xs font-normal text-stone-500 print:text-[11px]">
+                              {row.orderSuffixesLine}
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="border border-stone-200 p-2 text-stone-700">
                       {row.qtyText || "—"}
