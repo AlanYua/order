@@ -117,6 +117,12 @@
     border: 1px solid #333 !important;
     padding: 8px 10px;
   }
+  /* 尾碼欄：允許自動換行，內容長就往下推 */
+  .statistics-report .statistics-order-suffix-col {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
   .statistics-report tbody tr:nth-child(even) {
     background: #f0f9ff !important;
   }

@@ -104,7 +104,8 @@ function formatOrderSuffixesCell(suffixes: string[]) {
   const shown = suffixes.slice(0, ORDER_SUFFIX_DISPLAY_MAX);
   const more = suffixes.length - shown.length;
   const tail = more > 0 ? ` …共${suffixes.length}筆` : "";
-  return `${shown.join("/")}${tail}`;
+  // 讓瀏覽器可在斜線處換行（不改變肉眼看到的字元）
+  return `${shown.join("/\u200b")}${tail}`;
 }
 
 function buildFlatRows(
@@ -395,7 +396,7 @@ export default function AdminStatisticsPage() {
                     </span>
                   </th>
                   <th
-                    className="statistics-order-suffix-col border border-stone-200 p-2 text-left text-sm font-semibold text-stone-800 whitespace-nowrap"
+                    className="statistics-order-suffix-col border border-stone-200 p-2 text-left text-sm font-semibold text-stone-800"
                     title="訂單編號末段（隨機碼），斜線分隔"
                   >
                     尾碼
@@ -458,7 +459,7 @@ export default function AdminStatisticsPage() {
                     <td className="border border-stone-200 p-2 text-stone-700">
                       {row.qtyText || "—"}
                     </td>
-                    <td className="statistics-order-suffix-col border border-stone-200 p-2 text-stone-700 whitespace-nowrap text-sm tabular-nums print:text-[12px]">
+                    <td className="statistics-order-suffix-col border border-stone-200 p-2 text-stone-700 text-sm tabular-nums print:text-[12px]">
                       {row.orderSuffixesLine || "—"}
                     </td>
                   </tr>
