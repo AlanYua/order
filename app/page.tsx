@@ -860,12 +860,15 @@ function ItemRow({
   units: Unit[];
   addToCart: (item: Item, qty: number, unitId: string) => void;
 }) {
-  const [qty, setQty] = useState(1);
+  const [qty, setQty] = useState<string>("");
   const [unitId, setUnitId] = useState(item.unitId);
 
   useEffect(() => {
     setUnitId(item.unitId);
   }, [item.unitId]);
+
+  const qtyNum = qty.trim() === "" ? NaN : Number(qty);
+  const canAdd = Number.isFinite(qtyNum) && qtyNum > 0;
 
   return (
     <li className="flex items-center gap-2 flex-wrap border-b border-stone-100 pb-2 last:border-0">
@@ -875,7 +878,7 @@ function ItemRow({
         min="0.1"
         step="0.1"
         value={qty}
-        onChange={(e) => setQty(parseFloat(e.target.value) || 0)}
+        onChange={(e) => setQty(e.target.value)}
         className="w-16 rounded-lg border border-stone-200 px-2 py-1.5 text-right text-sm focus:border-emerald-500 outline-none"
       />
       <select
@@ -889,8 +892,13 @@ function ItemRow({
       </select>
       <button
         type="button"
-        onClick={() => addToCart(item, qty, unitId)}
-        className="text-sm rounded-lg bg-emerald-500 text-white px-3 py-1.5 hover:bg-emerald-600 transition"
+        disabled={!canAdd}
+        onClick={() => {
+          if (!canAdd) return;
+          addToCart(item, qtyNum, unitId);
+          setQty("");
+        }}
+        className="text-sm rounded-lg bg-emerald-500 text-white px-3 py-1.5 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
         加入
       </button>
